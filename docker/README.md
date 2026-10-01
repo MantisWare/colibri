@@ -1,6 +1,3 @@
-_Leggi il leggimi in [Italiano](README.IT.md)._
-
-
 # Colibrì Guide - Local Inference Engine
 
 A simple guide to running **Colibrì**, a local inference engine based on GLM 5.2, without needing programming knowledge. If you already have Docker installed, you are well on your way.
