@@ -9,8 +9,7 @@
 
 <p align="center">
   <a href="https://justvugg.github.io/colibri"><b>Website</b></a> ·
-  <a href="https://discord.gg/RXV83nSZdk"><b>Discord</b></a> ·
-  English · <a href="README.zh-CN.md">简体中文</a> · <a href="README.zh-TW.md">繁體中文</a> · <a href="README.it.md">Italiano</a> · <a href="README.ja.md">日本語</a>
+  <a href="https://discord.gg/RXV83nSZdk"><b>Discord</b></a>
 </p>
 
 **Tiny engine, immense model.** Run **frontier MoE models — 744B to 2.8T
@@ -389,12 +388,32 @@ the engine next to itself. You only need
 API gateway are Python scripts, while the engine itself is pure C with zero
 dependencies.
 
-**Or build from source** — needs `gcc` (or clang) with OpenMP:
+**Or build from source** — needs `gcc` (or clang) with OpenMP. On macOS,
+`brew install libomp` (or `port install libomp`) turns the build multithreaded;
+without it the binary still compiles, single-threaded.
 
 ```bash
-git clone https://github.com/JustVugg/colibri && cd colibri/c
-./setup.sh                                # checks gcc/OpenMP, builds, self-tests
+git clone https://github.com/JustVugg/colibri && cd colibri
+./build.sh                 # native GLM engine → c/colibri
+./build.sh --metal         # Apple Metal backend (macOS); run with COLI_METAL=1
+./build.sh --test          # build, then the dependency-free test suite
+./build.sh qwen36          # one family
+./build.sh --all           # every engine this machine can build
 ```
+
+`./build.sh` checks the compiler and OpenMP, then builds a **native** binary
+(`ARCH=native`) for this CPU. The model is not part of the build. Name a family
+to build that engine instead of the default GLM one:
+
+`colibri` (GLM-5.2/5.3) · `glm53` · `inkling` · `kimi_k3` · `olmoe` · `qwen36` · `qwen38` · `deepseek_v41` · `deepseek-v4`
+
+`deepseek-v4` builds on x86-64 Linux and Windows, and on arm64 Linux and macOS.
+`./build.sh --all` skips it on other hosts. `ARCH= ./build.sh` asks for the
+portable baseline instead of native. `make check` is the CI gate and rebuilds
+that portable binary; `./build.sh` leaves the native one in `c/`.
+
+From `c/`, `./setup.sh` is the same default native GLM build, and it runs the
+tiny self-test when the `glm_tiny` fixture is present.
 
 Want `coli` on your PATH? From a checkout, `pip install -e .` registers it (the
 engine still lives in `c/` — an editable install from the clone, not a wheel).
@@ -683,6 +702,7 @@ today its numbers come from a community of real machines. If it's useful to you:
 
 ```
 Makefile                  root build/check entry point
+build.sh                  native build (./build.sh, --metal, --test, --all)
 c/
 ├── colibri.c             GLM-5.2 engine  (make glm)
 ├── inkling.c             Inkling engine  (make inkling)
