@@ -158,3 +158,12 @@ c/kimi_k3_tiny/.coli_usage
 c/qwen38_vision_tiny/
 c/qwen38_mm_tiny/
 c/qwen38_tiny_fp8/
+
+# local startup choices (model path). Copy start.conf.example.
+start.conf
+
+# downloaded model weights
+/models/
+
+# Python packages for ./download (Homebrew Python is externally managed)
+.venv/

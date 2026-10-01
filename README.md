@@ -451,6 +451,48 @@ the full 756 GB on disk at once:
 ./coli convert --model /nvme/glm52_i4     # download+convert shard by shard (python, one-time)
 ```
 
+#### Download scripts
+
+`download/` has one script per family. With no directory argument the weights
+go to `models/<name>` in the checkout. That folder is gitignored. Pass a
+directory to put a model on another disk. A second run resumes.
+
+```bash
+./download/qwen36.sh                       # models/qwen36, ~20 GB
+./download/glm52.sh                        # models/glm52, ~372 GB
+./download/kimi-k3.sh /nvme/kimi-k3        # another disk
+./start.sh --model models/qwen36
+```
+
+The first snapshot download creates `.venv` in the checkout and installs
+`huggingface_hub` there. Homebrew Python refuses a system-wide `pip install`.
+A gated repo also needs a Hugging Face token (`hf auth login`, or `HF_TOKEN`).
+
+| script | what lands in DEST | size |
+|---|---|---|
+| `glm52.sh` | preconverted int4-gs64 with the int8 MTP head | ~372 GB |
+| `glm53.sh` | preconverted int4-gs64, no MTP head | ~419 GB |
+| `glm53-flash.sh` | download plus int4-gs64 conversion (dense stays BF16) | ~195 GB out |
+| `glm53-flash-mlx.sh` | MLX snapshot, default 4-bit (`--bits` 6-bit, 3-bit, 2-bit, 2bit-lite) | ~204 GB |
+| `inkling.sh` | preconverted int4 experts, bf16 dense | ~469 GB |
+| `kimi-k3.sh` | original checkpoint, no conversion | ~1.6 TB |
+| `deepseek-v4.sh` | official checkpoint, no conversion | ~167 GB |
+| `deepseek-v4-reap.sh` | REAP-pruned 150B, same engine | ~85 GB |
+| `deepseek-v41.sh` | official checkpoint, then the engram sidecar | ~510 GB |
+| `qwen38.sh` | official FP8 checkpoint, revision pinned | ~185 GB |
+| `qwen36.sh` | preconverted int4-gs64 | ~20 GB |
+| `olmoe.sh` | download plus merged int8 conversion | ~7 GB out |
+
+`glm53-flash.sh` and `olmoe.sh` install `numpy`, `torch`, and `safetensors` into `.venv`.
+`deepseek-v41.sh` installs `transformers`, `tokenizers`, and `numpy` there for the sidecar.
+
+`glm53-flash-mlx.sh` fetches
+[orcarouter/GLM-5.3-Flash-MLX](https://huggingface.co/orcarouter/GLM-5.3-Flash-MLX).
+The default is the 4-bit build mirrored at the repo root (~204 GB).
+`--bits 6-bit`, `3-bit`, `2-bit`, or `2bit-lite` selects another folder in that
+repo (~296 / 184 / 145 / 102 GB). Those are MLX weights for Apple Silicon.
+`glm53-flash.sh` is the container colibri runs.
+
 #### Other supported models
 
 GLM-5.2 is the reference model, but the same streaming approach runs six more
@@ -514,6 +556,39 @@ the dense set to 15.3 GB and lets the 975B run on a 25 GB box — with the hones
 trade-off written down.
 
 ### 3. Run it
+
+From the repository root, copy the startup config and set `MODEL` to the
+weights directory (the folder that contains `config.json`):
+
+```bash
+cp start.conf.example start.conf
+./start.sh                 # chat
+./start.sh web             # API + dashboard, opens a browser
+./start.sh serve           # API + dashboard, no browser
+./start.sh doctor          # read-only readiness check
+./start.sh plan            # inspect the planned VRAM/RAM/disk placement
+```
+
+`start.conf` is gitignored. It holds the model path and the knobs you want
+every time: `MODE`, `RAM`, `TOPP`, `METAL`, `MIRROR`, and for `web` / `serve`
+the `HOST` and `PORT`. `METAL=1` sets `COLI_METAL=1`; the binary has to have
+been built with `./build.sh --metal`.
+
+A one-off run does not need the file. `--model` wins over `start.conf`, which
+wins over `COLI_MODEL`:
+
+```bash
+./start.sh --model /nvme/glm52_i4 chat
+./start.sh --model /nvme/glm52_i4 --metal --ram 24 web
+./start.sh --model /nvme/qwen36_i4 --topp 0.85 chat
+./start.sh run "say this in one sentence"
+```
+
+`coli` reads `config.json` and picks the engine, so the command is the same
+for every family. Flags this script does not recognize are passed through
+(`./start.sh chat --effort high`).
+
+The same things, calling `coli` directly from `c/`:
 
 ```bash
 COLI_MODEL=/nvme/glm52_i4 ./coli chat     # RAM budget, cache and MTP auto-detected
@@ -703,6 +778,9 @@ today its numbers come from a community of real machines. If it's useful to you:
 ```
 Makefile                  root build/check entry point
 build.sh                  native build (./build.sh, --metal, --test, --all)
+start.sh                  start a model (./start.sh, web, serve)
+start.conf.example        copy to start.conf and set MODEL=
+download/                 one script per model (./download/qwen36.sh DEST)
 c/
 ├── colibri.c             GLM-5.2 engine  (make glm)
 ├── inkling.c             Inkling engine  (make inkling)

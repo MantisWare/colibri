@@ -1,0 +1,34 @@
+# Copy to start.conf and edit. start.conf is gitignored.
+#
+#   cp start.conf.example start.conf
+#   ./start.sh
+#
+# Command-line flags override this file. COLI_MODEL is used when MODEL is unset.
+
+# Directory that contains the model's config.json.
+# ./download/*.sh writes into models/<name>.
+MODEL=models/qwen36
+
+# chat, web, serve, doctor, plan, info, tune, or run
+MODE=chat
+
+# RAM budget in GB. Unset lets coli use about 88% of available RAM.
+# RAM=24
+
+# Apple GPU. The engine must have been built with ./build.sh --metal.
+# METAL=1
+
+# Second copy of the weights on another drive (expert reads are split).
+# MIRROR=/path/to/model-copy
+
+# Passed through to coli when set.
+# TOPP=0.85
+# TOPK=
+# CAP=
+# GPU=auto
+# VRAM=
+# POLICY=quality
+
+# web and serve only.
+# HOST=127.0.0.1
+# PORT=8000
