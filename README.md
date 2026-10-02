@@ -473,7 +473,6 @@ A gated repo also needs a Hugging Face token (`hf auth login`, or `HF_TOKEN`).
 | `glm52.sh` | preconverted int4-gs64 with the int8 MTP head | ~372 GB |
 | `glm53.sh` | preconverted int4-gs64, no MTP head | ~419 GB |
 | `glm53-flash.sh` | download plus int4-gs64 conversion (dense stays BF16) | ~195 GB out |
-| `glm53-flash-mlx.sh` | MLX snapshot, default 4-bit (`--bits` 6-bit, 3-bit, 2-bit, 2bit-lite) | ~204 GB |
 | `inkling.sh` | preconverted int4 experts, bf16 dense | ~469 GB |
 | `kimi-k3.sh` | original checkpoint, no conversion | ~1.6 TB |
 | `deepseek-v4.sh` | official checkpoint, no conversion | ~167 GB |
@@ -486,12 +485,7 @@ A gated repo also needs a Hugging Face token (`hf auth login`, or `HF_TOKEN`).
 `glm53-flash.sh` and `olmoe.sh` install `numpy`, `torch`, and `safetensors` into `.venv`.
 `deepseek-v41.sh` installs `transformers`, `tokenizers`, and `numpy` there for the sidecar.
 
-`glm53-flash-mlx.sh` fetches
-[orcarouter/GLM-5.3-Flash-MLX](https://huggingface.co/orcarouter/GLM-5.3-Flash-MLX).
-The default is the 4-bit build mirrored at the repo root (~204 GB).
-`--bits 6-bit`, `3-bit`, `2-bit`, or `2bit-lite` selects another folder in that
-repo (~296 / 184 / 145 / 102 GB). Those are MLX weights for Apple Silicon.
-`glm53-flash.sh` is the container colibri runs.
+`glm53-flash.sh` is the GLM-5.3-Flash container colibri runs.
 
 #### Other supported models
 
