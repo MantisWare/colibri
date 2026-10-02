@@ -4,31 +4,53 @@
 #   ./start.sh
 #
 # Command-line flags override this file. COLI_MODEL is used when MODEL is unset.
+# On Apple Silicon, CPU and GPU share one memory pool. There is no separate
+# VRAM budget. A 192 GB Mac should leave RAM unset for GLM-5.3-Flash.
 
-# Directory that contains the model's config.json.
+# Weights directory. Must contain config.json.
 # ./download/*.sh writes into models/<name>.
 MODEL=models/qwen36
 
+# What ./start.sh runs when you do not pass a command.
 # chat, web, serve, doctor, plan, info, tune, or run
+# web serves the API and dashboard and opens a browser.
 MODE=chat
 
-# RAM budget in GB. Unset lets coli use about 88% of available RAM.
-# RAM=24
+# RAM budget in GB, passed to coli as --ram.
+# For GLM-5.3-Flash, coli sets the expert cache to RAM-8 GB (at least 2).
+# Leave this unset and the engine measures free memory. On a 192 GB Mac the
+# ~195 GB Flash container does not fit, so the engine already uses free
+# memory minus a 3 GB margin. A number larger than what is free swaps.
+# RAM=160
 
-# Apple GPU. The engine must have been built with ./build.sh --metal.
+# Apple GPU for the resident matrices. Routed experts stay on disk. The
+# binary must be built with ./build.sh --metal. 1 on, 0 off.
 # METAL=1
 
-# Second copy of the weights on another drive (expert reads are split).
+# Second copy of the same weights on another drive. Expert reads are split
+# across the two copies. Leave unset with a single disk.
 # MIRROR=/path/to/model-copy
 
-# Passed through to coli when set.
+# Expert routing for engines that read TOPP and TOPK. GLM-5.3-Flash does
+# not: it uses the checkpoint (8 experts per token). Leaving these unset
+# keeps that behavior.
 # TOPP=0.85
-# TOPK=
-# CAP=
+# TOPK=8
+
+# Expert-cache slots per layer. Unset lets the engine size the cache from
+# free RAM. An explicit number replaces that.
+# CAP=8
+
+# Discrete-GPU placement. Apple Silicon has no separate VRAM pool; use
+# METAL instead. GPU is auto, none, or a device list such as 0,1.
+# VRAM is a CUDA/HIP budget in GB.
 # GPU=auto
-# VRAM=
+# VRAM=24
+
+# Planner policy when a plan is applied: quality, balanced, or
+# experimental-fast. quality keeps the checkpoint's routing.
 # POLICY=quality
 
-# web and serve only.
+# Bind address and port for web and serve. Ignored by chat.
 # HOST=127.0.0.1
 # PORT=8000
